@@ -1,0 +1,32 @@
+{
+  "name": "classpulse",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:web\" \"npm run dev:server\"",
+    "dev:web": "npm run dev -w apps/web",
+    "dev:server": "npm run dev -w apps/server",
+    "build": "npm run prisma:generate && npm run build:server && npm run build:web",
+    "build:server": "npm run build -w apps/server",
+    "build:web": "npm run build -w apps/web",
+    "start": "node apps/server/dist/server.js",
+    "start:server": "npm run start -w apps/server",
+    "lint": "eslint .",
+    "prisma:generate": "prisma generate --schema apps/server/src/prisma/schema.prisma",
+    "prisma:migrate:deploy": "prisma migrate deploy --schema apps/server/src/prisma/schema.prisma",
+    "typecheck": "npm run typecheck -w apps/web && npm run typecheck -w apps/server"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "concurrently": "^9.0.0",
+    "eslint": "^9.0.0",
+    "globals": "^15.0.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.0.0",
+    "typescript-eslint": "^8.0.0"
+  }
+}

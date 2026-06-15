@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         UserRole @default(TEACHER)
+  createdAt    DateTime @default(now())
+
+  quizzes  Quiz[]
+  sessions Session[]
+}
+
+model Quiz {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  teacherId String
+  teacher   User       @relation(fields: [teacherId], references: [id])
+  questions Question[]
+  sessions  Session[]
+}
+
+model Question {
+  id       String       @id @default(cuid())
+  content  String
+  type     QuestionType
+  points   Float        @default(1)
+  order    Int
+  imageUrl String?
+
+  quizId  String
+  quiz    Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  options Option[]
+  answers Answer[]
+}
+
+model Option {
+  id        String  @id @default(cuid())
+  content   String
+  isCorrect Boolean @default(false)
+  order     Int
+
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model Session {
+  id          String        @id @default(cuid())
+  roomCode    String        @unique @db.VarChar(8)
+  status      SessionStatus @default(WAITING)
+  timeLimit   Int?
+  showScore   Boolean       @default(true)
+  showAnswers Boolean       @default(true)
+  startedAt   DateTime?
+  endedAt     DateTime?
+  createdAt   DateTime      @default(now())
+
+  quizId       String
+  quiz         Quiz          @relation(fields: [quizId], references: [id])
+  teacherId    String
+  teacher      User          @relation(fields: [teacherId], references: [id])
+  participants Participant[]
+}
+
+model Participant {
+  id          String   @id @default(cuid())
+  name        String
+  studentCode String?
+  score       Float?
+  timeTaken   Int?
+  submittedAt DateTime?
+  joinedAt    DateTime @default(now())
+
+  sessionId String
+  session   Session @relation(fields: [sessionId], references: [id])
+  answers   Answer[]
+
+  @@unique([sessionId, name])
+}
+
+model Answer {
+  id             String   @id @default(cuid())
+  selectedOption String?
+  textAnswer     String?
+  isCorrect      Boolean?
+  earnedPoints   Float?
+  answeredAt     DateTime @default(now())
+
+  participantId String
+  participant   Participant @relation(fields: [participantId], references: [id])
+  questionId    String
+  question      Question    @relation(fields: [questionId], references: [id])
+
+  @@unique([participantId, questionId])
+}
+
+enum QuestionType {
+  MCQ
+  TRUE_FALSE
+  SHORT_ANSWER
+}
+
+enum SessionStatus {
+  WAITING
+  ACTIVE
+  ENDED
+}
+
+enum UserRole {
+  TEACHER
+  ADMIN
+}
